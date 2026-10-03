@@ -45,15 +45,38 @@ async function parseError(response) {
   }
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// Render free services sleep. The first browser request while they wake often
+// fails before CORS headers exist, which surfaces as a network error.
+const WAKE_RETRY_DELAYS_MS = [4000, 8000, 12000, 20000]
+
 async function request(path, options = {}) {
   let response
-  try {
-    response = await fetch(`${API_URL}${path}`, options)
-  } catch {
-    const hint = isLocalUrl(API_URL)
-      ? 'Make sure the FastAPI server is running on port 8000.'
-      : `Could not reach the API at ${API_URL}.`
-    throw new Error(`Backend unavailable. ${hint}`)
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      response = await fetch(`${API_URL}${path}`, options)
+    } catch {
+      if (attempt < WAKE_RETRY_DELAYS_MS.length) {
+        await delay(WAKE_RETRY_DELAYS_MS[attempt])
+        continue
+      }
+      const hint = isLocalUrl(API_URL)
+        ? 'Make sure the FastAPI server is running on port 8000.'
+        : `Could not reach the API at ${API_URL}.`
+      throw new Error(`Backend unavailable. ${hint}`)
+    }
+
+    if (
+      [502, 503, 504].includes(response.status) &&
+      attempt < WAKE_RETRY_DELAYS_MS.length
+    ) {
+      await delay(WAKE_RETRY_DELAYS_MS[attempt])
+      continue
+    }
+    break
   }
 
   if (!response.ok) {
