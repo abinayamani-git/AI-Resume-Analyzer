@@ -19,7 +19,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Allow local Vite dev server (and common localhost variants)
+# Allow local Vite/dev servers and the production frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -27,6 +27,7 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://ai-resume-analyzer-1-h3mm.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
