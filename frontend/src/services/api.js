@@ -3,7 +3,38 @@
  * Keep all fetch calls here — do not scatter them across components.
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const PRODUCTION_API_URL = 'https://ai-resume-analyzer-backend-rvbv.onrender.com'
+const DEV_API_URL = 'http://localhost:8000'
+const PRODUCTION_FRONTEND_HOST = 'ai-resume-analyzer-1-h3mm.onrender.com'
+
+function isLocalUrl(url) {
+  try {
+    const { hostname } = new URL(url)
+    return hostname === 'localhost' || hostname === '127.0.0.1'
+  } catch {
+    return false
+  }
+}
+
+function resolveApiUrl() {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
+
+  // When the app is served from the production frontend host, never call localhost.
+  if (typeof window !== 'undefined' && window.location.hostname === PRODUCTION_FRONTEND_HOST) {
+    if (envUrl && !isLocalUrl(envUrl)) return envUrl
+    return PRODUCTION_API_URL
+  }
+
+  // Explicit env (local .env or Render build var) wins for non-production hosts.
+  if (envUrl) return envUrl
+
+  // Production builds without VITE_API_URL still need the Render backend.
+  if (import.meta.env.PROD) return PRODUCTION_API_URL
+
+  return DEV_API_URL
+}
+
+const API_URL = resolveApiUrl()
 
 async function parseError(response) {
   try {
@@ -19,9 +50,10 @@ async function request(path, options = {}) {
   try {
     response = await fetch(`${API_URL}${path}`, options)
   } catch {
-    throw new Error(
-      'Backend unavailable. Make sure the FastAPI server is running on port 8000.',
-    )
+    const hint = isLocalUrl(API_URL)
+      ? 'Make sure the FastAPI server is running on port 8000.'
+      : `Could not reach the API at ${API_URL}.`
+    throw new Error(`Backend unavailable. ${hint}`)
   }
 
   if (!response.ok) {
