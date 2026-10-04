@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
-  // Render web services must listen on 0.0.0.0 and the injected PORT.
+  // Local preview only. Production hosting uses `node server.js`.
   preview: {
     host: true,
     port: Number(process.env.PORT) || 4173,
