@@ -62,5 +62,5 @@ def root():
     return {
         "app": settings.app_name,
         "message": "API is running. Visit /docs for interactive documentation.",
-        "health": "/api/health",
+        "health": "/health",
     }

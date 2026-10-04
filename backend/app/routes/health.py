@@ -8,6 +8,7 @@ from app.models import HealthResponse
 router = APIRouter(tags=["health"])
 
 
+@router.get("/health", response_model=HealthResponse)
 @router.get("/api/health", response_model=HealthResponse)
 def health_check():
     """Simple liveness endpoint for frontend connectivity checks."""

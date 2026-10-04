@@ -12,6 +12,7 @@ router = APIRouter(tags=["analyze"])
 
 
 @router.post("/api/analyze", response_model=AnalysisResponse)
+@router.post("/analyze", response_model=AnalysisResponse)
 def analyze_resume(payload: AnalyzeRequest):
     """
     Extract resume text and run the modular AI analysis service.
